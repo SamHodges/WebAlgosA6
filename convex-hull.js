@@ -1,51 +1,314 @@
-// set ns 
-const ns = "http://www.w3.org/2000/svg";
+// next steps: update visual based on return of compatible
 
-// get elements from index
-const box = document.querySelector("#graph-box");
-const startButton = document.querySelector("#startButton");
-const stepButton = document.querySelector("#stepButton");
-const fullButton = document.querySelector("#fullButton");
+const SVG_NS = "http://www.w3.org/2000/svg";
+const SVG_WIDTH = 600;
+const SVG_HEIGHT = 400;
 
-// add event listeners
-startButton.addEventListener("click", startAnimation);
-stepButton.addEventListener("click", stepAnimation);
-fullButton.addEventListener("click", fullAnimation);
-
-
-// class for a visualized point
-function VisualPoint (x, y, graph, id) {
+// An object that represents a 2-d point, consisting of an
+// x-coordinate and a y-coordinate. The `compareTo` function
+// implements a comparison for sorting with respect to x-coordinates,
+// breaking ties by y-coordinate.
+function Point (x, y, id) {
     this.x = x;
     this.y = y;
     this.id = id;
-    this.circle = document.createElementNS(ns, "circle");
+
+    // Compare this Point to another Point p for the purposes of
+    // sorting a collection of points. The comparison is according to
+    // lexicographical ordering. That is, (x, y) < (x', y') if (1) x <
+    // x' or (2) x == x' and y < y'.
+    this.compareTo = function (p) {
+    if (this.x > p.x) {
+        return 1;
+    }
+
+    if (this.x < p.x) {
+        return -1;
+    }
+
+    if (this.y > p.y) {
+        return 1;
+    }
+
+    if (this.y < p.y) {
+        return -1;
+    }
+
+    return 0;
+    }
+
+    // return a string representation of this Point
+    this.toString = function () {
+    return "(" + x + ", " + y + ")";
+    }
+}
+
+// An object that represents a set of Points in the plane. The `sort`
+// function sorts the points according to the `Point.compareTo`
+// function. The `reverse` function reverses the order of the
+// points. The functions getXCoords and getYCoords return arrays
+// containing x-coordinates and y-coordinates (respectively) of the
+// points in the PointSet.
+function PointSet () {
+    this.points = [];
+    this.curPointID = 0;
+
+    // create a new Point with coordintes (x, y) and add it to this
+    // PointSet
+    this.addNewPoint = function (x, y) {
+    this.points.push(new Point(x, y, this.curPointID));
+    this.curPointID++;
+    }
+
+    // add an existing point to this PointSet
+    this.addPoint = function (pt) {
+    this.points.push(pt);
+    }
+
+    // sort the points in this.points 
+    this.sort = function () {
+    this.points.sort((a,b) => {return a.compareTo(b)});
+    }
+
+    // reverse the order of the points in this.points
+    this.reverse = function () {
+    this.points.reverse();
+    }
+
+    // return an array of the x-coordinates of points in this.points
+    this.getXCoords = function () {
+    let coords = [];
+    for (let pt of this.points) {
+        coords.push(pt.x);
+    }
+
+    return coords;
+    }
+
+    // return an array of the y-coordinates of points in this.points
+    this.getYCoords = function () {
+    let coords = [];
+    for (pt of this.points) {
+        coords.push(pt.y);
+    }
+
+    return coords;
+    }
+
+    // get the number of points 
+    this.size = function () {
+    return this.points.length;
+    }
+
+    // return a string representation of this PointSet
+    this.toString = function () {
+    let str = '[';
+    for (let pt of this.points) {
+        str += pt + ', ';
+    }
+    str = str.slice(0,-2);  // remove the trailing ', '
+    str += ']';
+
+    return str;
+    }
+}
+
+
+/*
+ * An object representing an instance of the convex hull problem. A ConvexHull stores a PointSet ps that stores the input points, and a ConvexHullViewer viewer that displays interactions between the ConvexHull computation and the 
+ */
+function ConvexHull (ps, viewer) {
+    this.ps = ps;          // a PointSet storing the input to the algorithm
+    this.viewer = viewer;  // a ConvexHullViewer for this visualization
+
+    // start a visualization of the Graham scan algorithm performed on ps
+    this.start = function () {
+    
+    // COMPLETE THIS METHOD
+    
+    }
+
+    // perform a single step of the Graham scan algorithm performed on ps
+    this.step = function () {
+    
+        // COMPLETE THIS METHOD
+    
+    }
+
+    // Return a new PointSet consisting of the points along the convex
+    // hull of ps. This method should **not** perform any
+    // visualization. It should **only** return the convex hull of ps
+    // represented as a (new) PointSet. Specifically, the elements in
+    // the returned PointSet should be the vertices of the convex hull
+    // in clockwise order, starting from the left-most point, breaking
+    // ties by minimum y-value.
+    this.getConvexHull = function () {
+
+    // COMPLETE THIS METHOD
+    
+    }
+}
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------------------------------------------------//
+
+function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, convexHull) {
+    this.svg = svg;  // svg object where the visualization is drawn
+    this.ps = ps;    // list of points in form of PointSet
+    this.points = []; //set of visual points
+    this.edges = []; // set of edges
+    this.startButton = startButton;
+    this.stepButton = stepButton;
+    this.fullButton = fullButton;
+    this.convexHull = convexHull; 
+    this.a = -1;
+    this.b = -1;
+    this.c = -1;
+
+    // create svg group for displaying edges
+    this.edgeGroup = document.createElementNS(SVG_NS, "g");
+    this.edgeGroup.id = "graph-edges";
+    this.svg.appendChild(this.edgeGroup);
+
+    // create svg group for displaying points
+    this.pointGroup = document.createElementNS(SVG_NS, "g");
+    this.pointGroup.id = "graph-points";
+    this.svg.appendChild(this.pointGroup);
+
+    /*
+    draw and update line segments between points to represent portions of the convex hull
+    */
+
+    // event listener for adding points
+    this.svg.addEventListener("click", (e) => {
+        // corrections for coordinates
+        const rect = this.svg.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // add new point to point set
+        this.ps.addNewPoint(x, y);
+
+        // create corresponding visual
+        this.createVisualPoint(ps.points[ps.points.length-1]);
+    });
+
+    this.startButton.addEventListener("click", (e) => {
+        this.a = 0;
+        this.b = 1;
+        this.updateVisual();
+        let firstEdge = new VisualEdge(this.ps.points[this.a], this.ps.points[this.b], this.edgeGroup);
+        firstEdge.init();
+        this.edges.push(firstEdge);
+    });
+
+    this.stepButton.addEventListener("click", (e) => {
+        this.callNextC();
+    });
+
+    this.callNextC = function(){
+        // TODO: replace this part whwn Laura's done
+        let nextOutput =  [ps.points[0], ps.points[1], ps.points[2], true] //this.convexHull.nextC() // this will return [A, B, C, bool]
+        this.updateVisual(nextOuput[0], nextOuput[1], nextOuput[2]);
+        if (nextOuput[3] == false) {
+            this.callNextC(); // move on to next C while stack fills
+        }
+        else{
+            // TODO: replace with Laura's
+            let compatible = true; // this.convexHull.compatible(nextOuput[0], nextOuput[1], nextOuput[2]); // checks if they're compatible and returns bool 
+            // TODO: update visual based on this!
+        }
+
+    }
+
+    this.updateVisual = function(a,b,c){
+        for (let i = 0; i<this.ps.size(); i++){
+            this.points[i].unhighlight();
+        }
+
+        console.log(this.a);
+        try{
+            this.points[this.a].highlight();
+            this.points[this.b].highlight();
+            this.points[this.c].highlight();
+        }
+        catch{
+            console.log("missing one of a,b,c");
+        }
+        
+    }
+
+
+    // initialize everything at the beginning so points are displayed on screen
+    this.initialize = function(){
+        this.ps.sort();
+        for (let i = 0; i<this.ps.size(); i++){
+            this.createVisualPoint(this.ps.points[i]);
+        }
+    }
+
+
+    // create a visual point
+    this.createVisualPoint = function (point) {
+        let currPoint = new VisualPoint(point, this.pointGroup);
+        currPoint.init();
+        this.points.push(currPoint);
+    }
+    }
+
+
+
+
+
+// class for a visualized point
+function VisualPoint (point, pointGroup) {
+    this.point = point;
+    this.x = this.point.x;
+    this.y = this.point.y;
+    this.circle = document.createElementNS(SVG_NS, "circle");
     this.highlighted = false;
+    this.edges = [];
 
     this.init = function(){
         this.circle.setAttributeNS(null, "cx", this.x);
         this.circle.setAttributeNS(null, "cy", this.y);
-        this.circle.setAttributeNS(null, "r", 30);
+        this.circle.setAttributeNS(null, "r", 10);
         this.circle.setAttributeNS(null, "stroke", "black")
+        this.circle.setAttributeNS(null, "stroke-width", "2");
         this.circle.setAttributeNS(null, "fill", "white");
-        box.appendChild(this.circle);
+        this.circle.setAttributeNS(null, "z-index", "3"); 
+        pointGroup.appendChild(this.circle);
+    }
+
+    this.unhighlight = function(){
+        this.highlighted = false;
+        this.circle.setAttributeNS(null, "stroke", "black")
+        this.circle.setAttributeNS(null, "stroke-width", "2");
     }
 
     this.highlight = function(){
         this.highlighted = true;
         this.circle.setAttributeNS(null, "stroke", "green");
         this.circle.setAttributeNS(null, "stroke-width", "5");
-    }
+    }   
 }
 
-
-// class for visualized edge
-function VisualEdge (point1, point2, graph, id){
+function VisualEdge (point1, point2, edgeGroup){
     this.x1 = point1.x;
     this.y1 = point1.y;
     this.x2 = point2.x;
     this.y2 = point2.y;
-    this.id = id;
-    this.line = document.createElementNS(ns, "line");
+    this.point1 = point1;
+    this.point2 = point2;
+    this.line = document.createElementNS(SVG_NS, "line");
 
     this.init = function(){
         this.line.setAttributeNS(null, "x1", this.x1);
@@ -55,98 +318,34 @@ function VisualEdge (point1, point2, graph, id){
         this.line.setAttributeNS(null, "stroke", "black");
         this.line.setAttributeNS(null, "stroke-width", "5");
         this.line.setAttributeNS(null, "stroke-dasharray", "10,10"); 
-        box.appendChild(this.line);
+        this.line.setAttributeNS(null, "z-index", "1"); 
+        edgeGroup.appendChild(this.line);
     }
 
     this.highlight = function(){
         this.highlighted = true;
         this.line.setAttributeNS(null, "stroke", "green");
     }
-}
 
-
-// class for visualized everything
-function ConvexHullViewer (pointList) {
-   this.id = document.querySelector("#graph-box");
-   this.pointList = pointList;
-   this.points = [];
-   this.edges = [];
-   this.nextPointID = 0;   
-   this.nextEdgeID = 0;  
-   this.done = false;
-   this.stepStage = 0;
-   this.a = -1;
-   this.b = -1;
-   this.c = -1;
-
-   // initialize everything at the beginning so points are displayed on screen
-   this.initialize = function(){
-        // TODO: Laura organizes points
-        // this.pointList = ConvexHull.organize(); -- organize list of points via Laura
-
-        for (let i = 0; i<this.pointList.length; i++){
-            createVisualPoint(pointList[i][0], pointList[i][1]);
-        }
-   }
-
-   this.getPointByID = function(id){
-        return points[id];
-   }
-
-   // create a visual point
-   this.createVisualPoint = function (x, y) {
-        const point = new VisualPoint(this.nextPointID, this, x, y);
-        this.points.append(point);
-        this.nextPointID++;
-    }
-
-    // create a visual edge and add to list
-    this.createVisualEdge = function (point1, point2){
-        const edge = new VisualEdge(this.nextEdgeID, this, point1, point2);
-        this.nextEdgeID++;
-        this.edges.append(edge);
-    }
-
-    // run through entire animation
-   this.fullAnimation = function(){
-        startAnimation();
-        while (!done){
-            stepAnimation();
-            done = true; //temp
-        }
-    }
-
-    // start the animation
-    this.startAnimation = function(){
-        // TODO: may have to edit for more vars if not possible to get circle from coordinates!
-        createVisualEdge(this.getPointByID(0), this.getPointByID(1));
-        this.getPointByID(0.highlight();
-        points[1].highlight();
-        this.a = 0;
-        this.b = 1;
-        this.c = 2;
-    }
-
-    // go through step of animation
-    this.stepAnimation = function(){
-        if (c == pointList.length) this.done = true;
-
-        switch(this.stepStage){
-        case this.stepStage == 0:
-            //nextC() call to Laura, returns A + B or null
-            let nextAB = null; // TODO: replace with Laura's return
-            if (nextAB != null){
-                this.a = nextAB[0];
-                this.b = nextAB[1];
-            }
-            break;
-        case this.stepStage == 1:
-
-            break;
-
-        }
+    this.unhighlight = function(){
+        this.highlighted = false;
+        this.line.setAttributeNS(null, "stroke", "black");
     }
 }
 
 
+// get elements from index
+const svg = document.querySelector("#convex-hull-box");
+const startButton = document.querySelector("#startButton");
+const stepButton = document.querySelector("#stepButton");
+const fullButton = document.querySelector("#fullButton");
 
+// start everything
+// const graph = new Graph(0);
+const ps = new PointSet();
+ps.addNewPoint(100, 100);
+ps.addNewPoint(100, 300);
+ps.addNewPoint(300, 300);
+ps.addNewPoint(300, 100);
+const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton);
+cv.initialize();

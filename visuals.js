@@ -49,8 +49,6 @@ function createCircle(x,y){
     circle.setAttributeNS(null, "class", "shapes");
     circle.setAttributeNS(null, "tabindex", "0");
     box.appendChild(circle);
-    console.log(document.elementsFromPoint(x, y));	
-
 }
 
 function highlightCircle(x,y){
@@ -95,8 +93,7 @@ function fullAnimation(){
 }
 
 // set up animation
-function startAnimation(){
-	console.log("starting animation!");
+function startAnimation(){onsole.log("starting animation!");
 	//TODO: get list in order from Laura and reset convexList
 	convexList = [[100,100], [100,300], [300,100], [300,300]]; //organize()
 
@@ -107,6 +104,7 @@ function startAnimation(){
 
 	// change step type for first expansion
 	stepType = "expand";
+	c
 }
 
 // next step of animation
