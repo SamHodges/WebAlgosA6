@@ -12,6 +12,15 @@ function Point (x, y, id) {
     this.x = x;
     this.y = y;
     this.id = id;
+    this.visualPoint = null;
+
+    this.setVisualPoint = function(visualPoint){
+        this.visualPoint = visualPoint;
+    }
+
+    this.getVisualPoint = function(){
+        return this.visualPoint;
+    }
 
     // Compare this Point to another Point p for the purposes of
     // sorting a collection of points. The comparison is according to
@@ -120,6 +129,11 @@ function PointSet () {
 function ConvexHull (ps, viewer) {
     this.ps = ps;          // a PointSet storing the input to the algorithm
     this.viewer = viewer;  // a ConvexHullViewer for this visualization
+    this.done = false; // variable for whether it's finished or not-- Laura, make sure to update this when finished!!
+
+    this.isDone = function(){
+        return this.done;
+    }
 
     // start a visualization of the Graham scan algorithm performed on ps
     this.start = function () {
@@ -160,18 +174,27 @@ function ConvexHull (ps, viewer) {
 
 //------------------------------------------------------------------------------------------------------------------------//
 
-function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, convexHull) {
+// TODO: change deleted code to account for the following: selecting and then starting animation, deleting when connected to other nodes
+
+function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopButton, convexHull) {
     this.svg = svg;  // svg object where the visualization is drawn
     this.ps = ps;    // list of points in form of PointSet
     this.points = []; //set of visual points
-    this.edges = []; // set of edges
-    this.startButton = startButton;
-    this.stepButton = stepButton;
-    this.fullButton = fullButton;
     this.convexHull = convexHull; 
-    this.a = -1;
-    this.b = -1;
-    this.c = -1;
+    this.stepPhase = "nextC";
+    this.nextABC = null; 
+    this.done = false;
+    this.nextStepInterval = null;
+    this.highlightedPoints = [];
+
+    document.addEventListener("keydown", (e) => {
+        if(e.key == "Backspace"){
+            for (let i=0; i<this.highlightedPoints.length; i++){
+                this.highlightedPoints[i].setAttributeNS(null, "r", 0);
+            }
+        }
+    });
+
 
     // create svg group for displaying edges
     this.edgeGroup = document.createElementNS(SVG_NS, "g");
@@ -194,39 +217,98 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, convexH
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // add new point to point set
-        this.ps.addNewPoint(x, y);
+        if (e.explicitOriginalTarget.localName == "circle"){
+            let curCircle = e.target;
+            if (this.highlightedPoints.includes(curCircle)){
+                curCircle.setAttributeNS(null, "stroke", "black");
+                curCircle.setAttributeNS(null, "stroke-width", "2");
+                this.highlightedPoints.splice(this.highlightedPoints.indexOf(curCircle), 1);
+            }
+            else{
+                curCircle.setAttributeNS(null, "stroke", "red");
+                curCircle.setAttributeNS(null, "stroke-width", "5");
+                this.highlightedPoints.push(curCircle);
+            }
+            
 
-        // create corresponding visual
-        this.createVisualPoint(ps.points[ps.points.length-1]);
-    });
-
-    this.startButton.addEventListener("click", (e) => {
-        this.a = 0;
-        this.b = 1;
-        this.updateVisual();
-        let firstEdge = new VisualEdge(this.ps.points[this.a], this.ps.points[this.b], this.edgeGroup);
-        firstEdge.init();
-        this.edges.push(firstEdge);
-    });
-
-    this.stepButton.addEventListener("click", (e) => {
-        this.callNextC();
-    });
-
-    this.callNextC = function(){
-        // TODO: replace this part whwn Laura's done
-        let nextOutput =  [ps.points[0], ps.points[1], ps.points[2], true] //this.convexHull.nextC() // this will return [A, B, C, bool]
-        this.updateVisual(nextOuput[0], nextOuput[1], nextOuput[2]);
-        if (nextOuput[3] == false) {
-            this.callNextC(); // move on to next C while stack fills
         }
         else{
-            // TODO: replace with Laura's
-            let compatible = true; // this.convexHull.compatible(nextOuput[0], nextOuput[1], nextOuput[2]); // checks if they're compatible and returns bool 
-            // TODO: update visual based on this!
-        }
+            // add new point to point set
+            this.ps.addNewPoint(x, y);
 
+            // create corresponding visual
+            this.createVisualPoint(ps.points[ps.points.length-1]);
+        }
+    });
+
+    startButton.addEventListener("click", (e) => {
+        this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+    });
+
+    stepButton.addEventListener("click", (e) => {
+        this.nextStep();
+    });
+
+    fullButton.addEventListener("click", (e) =>{
+        this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+        this.nextStepInterval = setInterval(() => {
+        this.nextStep();
+        }, 1000);
+        while (this.done) clearInterval(this.nextStepInterval);
+    });
+
+    stopButton.addEventListener("click", (e) =>{
+        if (this.nextStepInterval!=null) clearInterval(this.nextStepInterval);
+    });
+
+    this.nextStep = function(){
+        console.log(this.stepPhase);
+        switch(this.stepPhase){
+        case "nextC":
+            this.nextC();
+            break;
+        case "compatible":
+            this.checkCompatible();
+            break;
+        case "remove":
+            this.removeBadEdge();
+            break;
+        case "done":
+            break;
+        }
+    }
+
+    this.removeBadEdge = function(){
+        this.nextABC[0].getVisualPoint().getCurrentEdge().remove();
+        this.nextABC[1].getVisualPoint().getCurrentEdge().remove();
+        this.stepPhase = "nextC";
+    }
+
+    this.nextC = function(){
+        // TODO: replace this part whwn Laura's done
+        this.nextABC =  [this.ps.points[0], this.ps.points[1], this.ps.points[2]] //this.convexHull.nextC() // this will return [A, B, C]
+        this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+        this.stepPhase = "compatible"; //move on to compatible if stack is full enough
+    }
+
+    this.checkCompatible = function(){
+        // TODO: replace with Laura's
+            let compatible = false; // this.convexHull.compatible(nextOutput[0], nextOutput[1], nextOutput[2]); // checks if they're compatible and returns bool 
+
+            if (compatible){
+                // turn line green and solid
+                this.nextABC[0].getVisualPoint().getCurrentEdge().compatible();
+                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
+                this.stepPhase = "nextC";
+            }
+            else{
+                // red dotted line with a cross, add to "delete" cycle
+                this.nextABC[0].getVisualPoint().getCurrentEdge().incompatible();
+                this.nextABC[1].getVisualPoint().getCurrentEdge().incompatible();
+                this.stepPhase = "remove";
+            }
+        this.done = false; // !this.convexHull.pushC(); // TODO: returns whether C pushed successfully
+        if (this.done) this.stepPhase = "done";
     }
 
     this.updateVisual = function(a,b,c){
@@ -234,14 +316,15 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, convexH
             this.points[i].unhighlight();
         }
 
-        console.log(this.a);
         try{
-            this.points[this.a].highlight();
-            this.points[this.b].highlight();
-            this.points[this.c].highlight();
+            a.highlight();
+            b.highlight();
+            c.highlight();
+            a.addEdge(b, this.edgeGroup);
+            b.addEdge(c, this.edgeGroup);
         }
         catch{
-            console.log("missing one of a,b,c");
+            // console.log(e);
         }
         
     }
@@ -275,7 +358,9 @@ function VisualPoint (point, pointGroup) {
     this.y = this.point.y;
     this.circle = document.createElementNS(SVG_NS, "circle");
     this.highlighted = false;
-    this.edges = [];
+    this.connectedPoints = [];
+    this.currentEdge = null;
+    this.deletable = false;
 
     this.init = function(){
         this.circle.setAttributeNS(null, "cx", this.x);
@@ -286,6 +371,7 @@ function VisualPoint (point, pointGroup) {
         this.circle.setAttributeNS(null, "fill", "white");
         this.circle.setAttributeNS(null, "z-index", "3"); 
         pointGroup.appendChild(this.circle);
+        this.point.setVisualPoint(this);
     }
 
     this.unhighlight = function(){
@@ -298,7 +384,26 @@ function VisualPoint (point, pointGroup) {
         this.highlighted = true;
         this.circle.setAttributeNS(null, "stroke", "green");
         this.circle.setAttributeNS(null, "stroke-width", "5");
-    }   
+    } 
+
+    this.addEdge = function(point, edgeGroup){
+        if (this.connectedPoints.includes(point)) return;
+        this.connectedPoints.push(point);
+        point.addConnected(this);
+        let edge = new VisualEdge(this, point, edgeGroup);
+        edge.init();
+        this.currentEdge = edge;
+        point.currentEdge = edge; 
+    }
+
+    this.addConnected = function(point){
+        this.connectedPoints.push(point);
+    }
+
+    this.getCurrentEdge = function(){
+        return this.currentEdge;
+    }
+
 }
 
 function VisualEdge (point1, point2, edgeGroup){
@@ -322,15 +427,23 @@ function VisualEdge (point1, point2, edgeGroup){
         edgeGroup.appendChild(this.line);
     }
 
-    this.highlight = function(){
+    this.compatible = function(){
         this.highlighted = true;
         this.line.setAttributeNS(null, "stroke", "green");
+        this.line.setAttributeNS(null, "stroke-dasharray", "10,0"); 
     }
 
-    this.unhighlight = function(){
+    this.incompatible = function(){
         this.highlighted = false;
-        this.line.setAttributeNS(null, "stroke", "black");
+        this.line.setAttributeNS(null, "stroke", "red");
+        this.line.setAttributeNS(null, "stroke-dasharray", "5,15"); 
     }
+
+    this.remove = function(){
+        this.line.setAttributeNS(null, "x2", this.x1);
+        this.line.setAttributeNS(null, "y2", this.y1);
+    }
+
 }
 
 
@@ -339,13 +452,15 @@ const svg = document.querySelector("#convex-hull-box");
 const startButton = document.querySelector("#startButton");
 const stepButton = document.querySelector("#stepButton");
 const fullButton = document.querySelector("#fullButton");
+const stopButton = document.querySelector("#stopButton");
+
 
 // start everything
-// const graph = new Graph(0);
+const convexHull = new ConvexHull(0);
 const ps = new PointSet();
 ps.addNewPoint(100, 100);
 ps.addNewPoint(100, 300);
 ps.addNewPoint(300, 300);
 ps.addNewPoint(300, 100);
-const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton);
+const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, convexHull);
 cv.initialize();
