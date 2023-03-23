@@ -175,6 +175,7 @@ function ConvexHull (ps, viewer) {
 //------------------------------------------------------------------------------------------------------------------------//
 
 // TODO: change deleted code to account for the following: selecting and then starting animation, deleting when connected to other nodes
+// TODO: something wrong with the line display
 
 function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopButton, convexHull) {
     this.svg = svg;  // svg object where the visualization is drawn
@@ -191,6 +192,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         if(e.key == "Backspace"){
             for (let i=0; i<this.highlightedPoints.length; i++){
                 this.highlightedPoints[i].setAttributeNS(null, "r", 0);
+                // TODO: delete from points list lmaoooo
             }
         }
     });
@@ -307,7 +309,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
                 this.nextABC[1].getVisualPoint().getCurrentEdge().incompatible();
                 this.stepPhase = "remove";
             }
-        this.done = false; // !this.convexHull.pushC(); // TODO: returns whether C pushed successfully
+        this.done = false; // !this.convexHull.pushC(); // TODO: returns whether C pushed successfully @Laura
         if (this.done) this.stepPhase = "done";
     }
 
