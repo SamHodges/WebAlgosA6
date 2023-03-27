@@ -130,6 +130,7 @@ function ConvexHull (ps, viewer) {
     this.ps = ps;          // a PointSet storing the input to the algorithm
     this.viewer = viewer;  // a ConvexHullViewer for this visualization
     this.done = false; // variable for whether it's finished or not-- Laura, make sure to update this when finished!!
+    let psHull = [];
 
     this.isDone = function(){
         return this.done;
@@ -139,14 +140,41 @@ function ConvexHull (ps, viewer) {
     this.start = function () {
     
     // COMPLETE THIS METHOD
-    
+        ps.PointSet.sort();
+        psHull[0] = ps[0];
+        psHull[1] = ps[1];
+        ps.PointSet.reverse();
+        for(let i = 0; i<2; i++){
+            ps.pop();
+        }
+        ps.points[ps.points.length-1]
+        ps.PointSet.reverse();
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
     this.step = function () {
     
         // COMPLETE THIS METHOD
+        if(psHull.length = 1){
+            psHull.push(ps[ps.length]);
+        } else {
+            while((this.isRight = false) && psHull.length>1){
+                psHull.pop();
+            }
+        }
     
+    }
+
+    this.isRight = function(a, b, c){
+        let isTrue = false;
+        //slope btwn a n b - if gr8er than slope btwn b and c, abc makes right turn
+        //if answer positive right if answer negative left
+        let aB = math.cross(a, b);
+        let bC = math.cross(b,c);
+        if(aB > bC){
+            isTrue = true;
+        }
+        return isTrue;
     }
 
     // Return a new PointSet consisting of the points along the convex
@@ -159,7 +187,10 @@ function ConvexHull (ps, viewer) {
     this.getConvexHull = function () {
 
     // COMPLETE THIS METHOD
-    
+        ps.ConvexHull.start();
+        ps.ConvexHull.step();
+        this.done = true;
+        return psHull;
     }
 }
 
