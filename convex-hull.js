@@ -130,7 +130,7 @@ function ConvexHull (ps, viewer) {
     this.ps = ps;          // a PointSet storing the input to the algorithm
     this.viewer = viewer;  // a ConvexHullViewer for this visualization
     this.done = false; // variable for whether it's finished or not-- Laura, make sure to update this when finished!!
-    let psHull = [];
+    this.psHull = [];
 
     this.isDone = function(){
         return this.done;
@@ -140,29 +140,28 @@ function ConvexHull (ps, viewer) {
     this.start = function () {
     
     // COMPLETE THIS METHOD
-        ps.PointSet.sort();
-        psHull[0] = ps[0];
-        psHull[1] = ps[1];
-        ps.PointSet.reverse();
+        this.ps.sort();
+        this.psHull[0] = this.ps[0];
+        this.psHull[1] = this.ps[1];
+        this.ps.reverse();
         for(let i = 0; i<2; i++){
-            ps.pop();
+            this.ps.points.pop();
         }
-        ps.points[ps.points.length-1]
-        ps.PointSet.reverse();
+        this.ps.reverse();
         console.log("Start FINISHED");
-        return psHull;
+        return this.psHull;
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
     this.step = function () {
     
         // COMPLETE THIS METHOD
-        if(psHull.length = 1){
-            psHull.push(ps[ps.length]);
+        if(this.psHull.length = 1){
+            this.psHull.push(this.ps[this.ps.length]);
         } else {
-            for(let i = 0; i < psHull.length; i++){
-                while((this.isRight(psHull[i], psHull[i+1], psHull[i+2]) = false) && psHull.length>1){
-                    psHull.pop();
+            for(let i = 0; i < this.psHull.length; i++){
+                while((this.isRight(this.psHull[i], this.psHull[i+1], this.psHull[i+2]) = false) && this.psHull.length>1){
+                    this.psHull.pop();
                 }
             }
         }
@@ -191,9 +190,9 @@ function ConvexHull (ps, viewer) {
     this.getConvexHull = function () {
 
     // COMPLETE THIS METHOD
-        ps.ConvexHull.start();
-        ps.ConvexHull.step();
-        return psHull;
+        this.start();
+        this.step();
+        return this.psHull;
     }
 }
 
@@ -483,20 +482,29 @@ function VisualEdge (point1, point2, edgeGroup){
 }
 
 
-// get elements from index
-const svg = document.querySelector("#convex-hull-box");
-const startButton = document.querySelector("#startButton");
-const stepButton = document.querySelector("#stepButton");
-const fullButton = document.querySelector("#fullButton");
-const stopButton = document.querySelector("#stopButton");
+function doVisuals(){
+    // get elements from index
+    const svg = document.querySelector("#convex-hull-box");
+    const startButton = document.querySelector("#startButton");
+    const stepButton = document.querySelector("#stepButton");
+    const fullButton = document.querySelector("#fullButton");
+    const stopButton = document.querySelector("#stopButton");
 
 
-// start everything
-const convexHull = new ConvexHull(0);
-const ps = new PointSet();
-ps.addNewPoint(100, 100);
-ps.addNewPoint(100, 300);
-ps.addNewPoint(300, 300);
-ps.addNewPoint(300, 100);
-const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, convexHull);
-cv.initialize();
+    // start everything
+    const convexHull = new ConvexHull(0);
+    const ps = new PointSet();
+    ps.addNewPoint(100, 100);
+    ps.addNewPoint(100, 300);
+    ps.addNewPoint(300, 300);
+    ps.addNewPoint(300, 100);
+    const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, convexHull);
+    cv.initialize();
+}
+
+try {
+    exports.PointSet = PointSet;
+    exports.ConvexHull = ConvexHull;
+  } catch (e) {
+    console.log("not running in Node");
+  }
