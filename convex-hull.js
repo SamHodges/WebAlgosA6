@@ -141,14 +141,15 @@ function ConvexHull (ps, viewer) {
     
     // COMPLETE THIS METHOD
         this.ps.sort();
-        this.psHull[0] = this.ps[0];
-        this.psHull[1] = this.ps[1];
+        this.psHull[0] = this.ps.points[0];
+        this.psHull[1] = this.ps.points[1];
         this.ps.reverse();
         for(let i = 0; i<2; i++){
             this.ps.points.pop();
         }
         this.ps.reverse();
-        console.log("Start FINISHED");
+        // console.log("Start FINISHED");
+        console.log("CURRENT STACK: " + this.psHull);
         return this.psHull;
     }
 
@@ -165,6 +166,8 @@ function ConvexHull (ps, viewer) {
                 }
             }
         }
+        console.log("CURRENT STACK: " + this.psHull);
+
     
     }
 
@@ -297,7 +300,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     });
 
     this.nextStep = function(){
-        console.log(this.stepPhase);
+        // console.log(this.stepPhase);
         switch(this.stepPhase){
         case "nextC":
             this.nextC();
