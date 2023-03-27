@@ -149,6 +149,8 @@ function ConvexHull (ps, viewer) {
         }
         ps.points[ps.points.length-1]
         ps.PointSet.reverse();
+        console.log("Start FINISHED");
+        return psHull;
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
@@ -158,8 +160,10 @@ function ConvexHull (ps, viewer) {
         if(psHull.length = 1){
             psHull.push(ps[ps.length]);
         } else {
-            while((this.isRight = false) && psHull.length>1){
-                psHull.pop();
+            for(let i = 0; i < psHull.length; i++){
+                while((this.isRight(psHull[i], psHull[i+1], psHull[i+2]) = false) && psHull.length>1){
+                    psHull.pop();
+                }
             }
         }
     
@@ -171,7 +175,7 @@ function ConvexHull (ps, viewer) {
         //if answer positive right if answer negative left
         let aB = math.cross(a, b);
         let bC = math.cross(b,c);
-        if(aB > bC){
+        if((aB - bC) > 0){
             isTrue = true;
         }
         return isTrue;
@@ -189,7 +193,6 @@ function ConvexHull (ps, viewer) {
     // COMPLETE THIS METHOD
         ps.ConvexHull.start();
         ps.ConvexHull.step();
-        this.done = true;
         return psHull;
     }
 }
