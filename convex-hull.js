@@ -151,21 +151,20 @@ function ConvexHull (ps, viewer) {
         }
         this.ps.reverse();
         // console.log("Start FINISHED");
-        console.log("CURRENT STACK: " + this.psHull);
         return this.psHull;
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
-    this.step = function () {
-    
+    this.step = function (currentC) {
+        
         // COMPLETE THIS METHOD
         if(this.psHull.length = 1){
-            this.psHull.push(this.ps[this.ps.length]);
+            console.log("pushing a new C!" + this.ps.points[currentC]);
+            this.psHull.push(this.ps.points[currentC]);
         } else {
-            for(let i = 0; i < this.psHull.length; i++){
-                while((this.isRight(this.psHull[i], this.psHull[i+1], this.psHull[i+2]) = false) && this.psHull.length>1){
-                    this.psHull.pop();
-                }
+            console.log("entering while loop")
+            while((!this.isRight(this.psHull[0], this.psHull[1], this.psHull[2])) && this.psHull.length>1){
+                this.psHull.pop();
             }
         }
         console.log("CURRENT STACK: " + this.psHull);
@@ -196,7 +195,9 @@ function ConvexHull (ps, viewer) {
 
     // COMPLETE THIS METHOD
         this.start();
-        this.step();
+        for (let i = 0; i<ps.size(); i++){
+            this.step(i);
+        }
         return this.psHull;
     }
 }
