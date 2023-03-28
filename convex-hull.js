@@ -145,24 +145,17 @@ function ConvexHull (ps, viewer) {
         this.ps.points.sort();
         this.psHull[0] = this.ps.points[0];
         this.psHull[1] = this.ps.points[1];
-        this.ps.reverse();
-        for(let i = 0; i<2; i++){
-            this.ps.points.pop();
-        }
-        this.ps.reverse();
-        console.log("Start FINISHED");
-        return this.psHull;
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
-    this.step = function () {
+    this.step = function (currentC) {
     
         // COMPLETE THIS METHOD
         if(this.psHull.length == 1){
             console.log("pushing a new C!" + this.ps.points[currentC]);
             this.psHull.push(this.ps.points[currentC]);
         } else {
-                while((!this.isRight(this.psHull[0], this.psHull[1], this.psHull[2])) && this.psHull.length>1){
+                while((!this.isRight(this.psHull[0], this.psHull[1], this.ps.points[currentC])) && this.psHull.length>1){
                     this.psHull.pop();
                 }
         }
@@ -170,15 +163,22 @@ function ConvexHull (ps, viewer) {
     }
 
     this.isRight = function(a, b, c){
-        // 3 points- a, b, c represented as (117, 924)
-        console.log("A, B, C: " + a + b + c);
+        // 3 points- a, b, c represented as (117, 924),(922, 877),(962, 852)
+        // console.log("A, B, C: " + a + b + c);
+
         // step 1: make 2 vectors vectorA and vectorB, assume z=0?
-        // let vectorA = 
+        let vectorA = [a[0] - b[0], a[1] - b[1], 0];
+        let vectorB = [c[0] - b[0], c[1] - b[1], 0];
 
         // step 2: calculate cross product, otherwise known as ||vectorC||
+        let cross = [
+            vectorA[1]*vectorB[2] - vectorA[2]*vectorB[1],
+            vectorA[2]*vectorB[0] - vectorA[0]*vectorB[2],
+            vectorA[0]*vectorB[1] - vectorA[1]*vectorB[0]
+            ];
 
         // step 3: check to see if ||c|| > 0 (and therefore if it's a right turn)
-        
+        return (cross > 0);
     }
 
     // Return a new PointSet consisting of the points along the convex
@@ -192,8 +192,41 @@ function ConvexHull (ps, viewer) {
 
     // COMPLETE THIS METHOD
         this.start();
-        this.step();
-        return this.psHull;
+        for (let i = 2; i<ps.size(); i++){
+            this.step(i);
+        }
+
+        let returnSet = new PointSet();
+        for(let j = 0; j<this.psHull.length; j++){
+            if (this.psHull[j] != undefined) returnSet.addPoint(this.psHull[j]);  
+        }
+
+        console.log(returnSet.toString());
+        console.log(">>>>>>>>>>>");
+
+        this.psHull = [];
+
+        this.ps.points.reverse();
+        this.psHull[0] = this.ps.points[0];
+        this.psHull[1] = this.ps.points[1];
+
+        // console.log(this.psHull);
+
+        for (let k = 2; k<ps.size(); k++){
+            this.step(k);
+        }
+
+        // console.log(this.psHull)
+
+        for(let l = 1; l<this.psHull.length; l++){
+            if (this.psHull[l] != undefined) returnSet.addPoint(this.psHull[l]);  
+        }
+        
+        console.log(returnSet.toString());
+        console.log("--------------------------------------------------------------")
+
+        // console.log(returnSet);
+        return returnSet;
     }
 }
 
