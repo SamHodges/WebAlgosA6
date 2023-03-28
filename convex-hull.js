@@ -148,7 +148,8 @@ function ConvexHull (ps, viewer) {
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
-    this.step = function (currentC) {
+    this.step = function (currentC) { 
+        console.log("current hull length: " + this.psHull.length);
     
         // COMPLETE THIS METHOD
         if(this.psHull.length == 1){
@@ -158,12 +159,11 @@ function ConvexHull (ps, viewer) {
             // console.log(this.psHull[1]);
             let rightTurn = this.isRight(this.psHull[0], this.psHull[1], this.ps.points[currentC]);
                 while(!rightTurn && this.psHull.length>1){
-                    // console.log("pop in while");
-                    // console.log(this.psHull.length);
-                    // console.log(rightTurn);
                     this.psHull.pop();
                 }
+            console.log("BEFORE current hull length: " + this.psHull.length);
             this.psHull.push(this.ps.points[currentC]);
+            console.log("AFTER current hull length: " + this.psHull.length)
         }
     
     }
@@ -175,20 +175,17 @@ function ConvexHull (ps, viewer) {
         // step 1: make 2 vectors vectorA and vectorB, assume z=0?
         // if(b == undefined) console.log("UNDEFINED B");
         let b = this.psHull[1];
-        if(b == undefined)console.log(this.psHull[1]);
-        let vectorA = [a.x - b.x, a.y - b.y, 0];
-        let vectorB = [c.x - b.x, c.y - b.y, 0];
+        let vectorA = [a.x - b.x, a.y - b.y];
+        let vectorB = [c.x - b.x, c.y - b.y];
         
 
-        // step 2: calculate cross product, otherwise known as ||vectorC||
-        let cross = [
-            vectorA[1]*vectorB[2] - vectorA[2]*vectorB[1],
-            vectorA[2]*vectorB[0] - vectorA[0]*vectorB[2],
-            vectorA[0]*vectorB[1] - vectorA[1]*vectorB[0]
-            ];
+        // step 2: calculate dot product
+        let dot = vectorA[0]*vectorB[0] + vectorA[1]*vectorB[1];
+        let det = vectorA[0]*vectorB[1] - vectorA[1]*vectorB[0]
+        
+        let angle = Math.atan2(det, dot);
 
-        // step 3: check to see if ||c|| > 0 (and therefore if it's a right turn)
-        return (cross >= 0);
+        return (angle >= 0);
     }
 
     // Return a new PointSet consisting of the points along the convex
@@ -206,6 +203,7 @@ function ConvexHull (ps, viewer) {
             this.step(i);
         }
 
+        console.log("END LENGTH: " + this.psHull.length);
         let returnSet = new PointSet();
         for(let j = 0; j<this.psHull.length; j++){
             if (this.psHull[j] != undefined) returnSet.addPoint(this.psHull[j]);  
@@ -225,6 +223,8 @@ function ConvexHull (ps, viewer) {
         for (let k = 2; k<ps.size(); k++){
             this.step(k);
         }
+
+        console.log("END LENGTH 2: " + this.psHull.length);
 
         // console.log(this.psHull)
 
