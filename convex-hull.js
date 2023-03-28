@@ -142,14 +142,14 @@ function ConvexHull (ps, viewer) {
     this.start = function () {
     
     // COMPLETE THIS METHOD
-        this.ps.points.sort();
+        this.ps.sort();
         this.psHull[0] = this.ps.points[0];
         this.psHull[1] = this.ps.points[1];
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
     this.step = function (currentC) { 
-        console.log("current hull length: " + this.psHull.length);
+        // console.log("current hull length: " + this.psHull.length);
     
         // COMPLETE THIS METHOD
         if(this.psHull.length == 1){
@@ -157,24 +157,23 @@ function ConvexHull (ps, viewer) {
             this.psHull.push(this.ps.points[currentC]);
         } else {
             // console.log(this.psHull[1]);
-            let rightTurn = this.isRight(this.psHull[0], this.psHull[1], this.ps.points[currentC]);
-                while(!rightTurn && this.psHull.length>1){
+                while(this.psHull.length>1 && !(this.isRight(this.psHull[this.psHull.length-2], this.psHull[this.psHull.length-1], this.ps.points[currentC]))){
                     this.psHull.pop();
                 }
-            console.log("BEFORE current hull length: " + this.psHull.length);
+            // console.log("BEFORE current hull length: " + this.psHull.length);
             this.psHull.push(this.ps.points[currentC]);
-            console.log("AFTER current hull length: " + this.psHull.length)
+            // console.log("AFTER current hull length: " + this.psHull.length)
         }
     
     }
 
-    this.isRight = function(a, z, c){
+    this.isRight = function(a, b, c){
         // 3 points- a, b, c represented as (117, 924),(922, 877),(962, 852)
         // console.log("A, B, C: " + a + b + c);
 
         // step 1: make 2 vectors vectorA and vectorB, assume z=0?
-        // if(b == undefined) console.log("UNDEFINED B");
-        let b = this.psHull[1];
+        // if(a == undefined) console.log("UNDEFINED A " + this.psHull.length);
+        
         let vectorA = [a.x - b.x, a.y - b.y];
         let vectorB = [c.x - b.x, c.y - b.y];
         
@@ -184,6 +183,10 @@ function ConvexHull (ps, viewer) {
         let det = vectorA[0]*vectorB[1] - vectorA[1]*vectorB[0]
         
         let angle = Math.atan2(det, dot);
+        // console.log("angle: " + angle);
+        // if (angle>= 0){
+        //     console.log("A, B, C: " + a + b + c);
+        // }
 
         return (angle >= 0);
     }
@@ -199,22 +202,24 @@ function ConvexHull (ps, viewer) {
 
     // COMPLETE THIS METHOD
         this.start();
+        // this.ps.sort();
+        // console.log(this.ps.getXCoords());
         for (let i = 2; i<ps.size(); i++){
             this.step(i);
         }
 
-        console.log("END LENGTH: " + this.psHull.length);
+        // console.log("END LENGTH: " + this.psHull.length);
         let returnSet = new PointSet();
         for(let j = 0; j<this.psHull.length; j++){
             if (this.psHull[j] != undefined) returnSet.addPoint(this.psHull[j]);  
         }
 
-        console.log(returnSet.toString());
-        console.log(">>>>>>>>>>>");
+        // console.log(returnSet.toString());
+        // console.log(">>>>>>>>>>>");
 
         this.psHull = [];
 
-        this.ps.points.reverse();
+        this.ps.reverse();
         this.psHull[0] = this.ps.points[0];
         this.psHull[1] = this.ps.points[1];
 
@@ -224,7 +229,7 @@ function ConvexHull (ps, viewer) {
             this.step(k);
         }
 
-        console.log("END LENGTH 2: " + this.psHull.length);
+        // console.log("END LENGTH 2: " + this.psHull.length);
 
         // console.log(this.psHull)
 
@@ -232,8 +237,8 @@ function ConvexHull (ps, viewer) {
             if (this.psHull[l] != undefined) returnSet.addPoint(this.psHull[l]);  
         }
         
-        console.log(returnSet.toString());
-        console.log("--------------------------------------------------------------")
+        // console.log(returnSet.toString());
+        // console.log("--------------------------------------------------------------")
 
         // console.log(returnSet);
         return returnSet;
