@@ -162,7 +162,7 @@ function ConvexHull (ps, viewer) {
             console.log("pushing a new C!" + this.ps.points[currentC]);
             this.psHull.push(this.ps.points[currentC]);
         } else {
-                while((!this.isRight(this.psHull[i], this.psHull[i+1], this.psHull[i+2])) && this.psHull.length>1){
+                while((!this.isRight(this.psHull[0], this.psHull[1], this.psHull[2])) && this.psHull.length>1){
                     this.psHull.pop();
                 }
         }
@@ -170,15 +170,15 @@ function ConvexHull (ps, viewer) {
     }
 
     this.isRight = function(a, b, c){
-        let isTrue = false;
-        //slope btwn a n b - if gr8er than slope btwn b and c, abc makes right turn
-        //if answer positive right if answer negative left
-        let aB = Math.cross(a, b);
-        let bC = Math.cross(b,c);
-        if((aB - bC) > 0){
-            isTrue = true;
-        }
-        return isTrue;
+        // 3 points- a, b, c represented as (117, 924)
+        console.log("A, B, C: " + a + b + c);
+        // step 1: make 2 vectors vectorA and vectorB, assume z=0?
+        // let vectorA = 
+
+        // step 2: calculate cross product, otherwise known as ||vectorC||
+
+        // step 3: check to see if ||c|| > 0 (and therefore if it's a right turn)
+        
     }
 
     // Return a new PointSet consisting of the points along the convex
