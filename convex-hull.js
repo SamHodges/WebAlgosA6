@@ -157,7 +157,7 @@ function ConvexHull (ps, viewer) {
     this.step = function (currentC) {
         
         // COMPLETE THIS METHOD
-        if(this.psHull.length = 1){
+        if(this.psHull.length == 1){
             console.log("pushing a new C!" + this.ps.points[currentC]);
             this.psHull.push(this.ps.points[currentC]);
         } else {
@@ -173,8 +173,8 @@ function ConvexHull (ps, viewer) {
         let isTrue = false;
         //slope btwn a n b - if gr8er than slope btwn b and c, abc makes right turn
         //if answer positive right if answer negative left
-        let aB = math.cross(a, b);
-        let bC = math.cross(b,c);
+        let aB = Math.cross(a, b);
+        let bC = Math.cross(b,c);
         if((aB - bC) > 0){
             isTrue = true;
         }
