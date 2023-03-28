@@ -183,12 +183,8 @@ function ConvexHull (ps, viewer) {
         let det = vectorA[0]*vectorB[1] - vectorA[1]*vectorB[0]
         
         let angle = Math.atan2(det, dot);
-        // console.log("angle: " + angle);
-        // if (angle>= 0){
-        //     console.log("A, B, C: " + a + b + c);
-        // }
 
-        return (angle >= 0);
+        return (angle > 0 && angle!=Math.PI); // turns right and also A and C aren't on a straight line
     }
 
     // Return a new PointSet consisting of the points along the convex
@@ -203,7 +199,7 @@ function ConvexHull (ps, viewer) {
     // COMPLETE THIS METHOD
         this.start();
         // this.ps.sort();
-        // console.log(this.ps.getXCoords());
+        // console.log(this.ps.getYCoords());
         for (let i = 2; i<ps.size(); i++){
             this.step(i);
         }
