@@ -152,23 +152,33 @@ function ConvexHull (ps, viewer) {
     
         // COMPLETE THIS METHOD
         if(this.psHull.length == 1){
-            console.log("pushing a new C!" + this.ps.points[currentC]);
+            // console.log("pushing a new C!" + this.ps.points[currentC]);
             this.psHull.push(this.ps.points[currentC]);
         } else {
-                while((!this.isRight(this.psHull[0], this.psHull[1], this.ps.points[currentC])) && this.psHull.length>1){
+            // console.log(this.psHull[1]);
+            let rightTurn = this.isRight(this.psHull[0], this.psHull[1], this.ps.points[currentC]);
+                while(!rightTurn && this.psHull.length>1){
+                    // console.log("pop in while");
+                    // console.log(this.psHull.length);
+                    // console.log(rightTurn);
                     this.psHull.pop();
                 }
+            this.psHull.push(this.ps.points[currentC]);
         }
     
     }
 
-    this.isRight = function(a, b, c){
+    this.isRight = function(a, z, c){
         // 3 points- a, b, c represented as (117, 924),(922, 877),(962, 852)
         // console.log("A, B, C: " + a + b + c);
 
         // step 1: make 2 vectors vectorA and vectorB, assume z=0?
-        let vectorA = [a[0] - b[0], a[1] - b[1], 0];
-        let vectorB = [c[0] - b[0], c[1] - b[1], 0];
+        // if(b == undefined) console.log("UNDEFINED B");
+        let b = this.psHull[1];
+        if(b == undefined)console.log(this.psHull[1]);
+        let vectorA = [a.x - b.x, a.y - b.y, 0];
+        let vectorB = [c.x - b.x, c.y - b.y, 0];
+        
 
         // step 2: calculate cross product, otherwise known as ||vectorC||
         let cross = [
@@ -178,7 +188,7 @@ function ConvexHull (ps, viewer) {
             ];
 
         // step 3: check to see if ||c|| > 0 (and therefore if it's a right turn)
-        return (cross > 0);
+        return (cross >= 0);
     }
 
     // Return a new PointSet consisting of the points along the convex
