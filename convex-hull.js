@@ -168,8 +168,6 @@ function ConvexHull (ps, viewer) {
     }
 
     this.notCompatible = function(){
-        console.log("equiv: ");
-        console.log(this.psHull[this.psHull.length-1]);
         return this.psHull.length>1 && !(this.isRight(this.psHull[this.psHull.length-2], this.psHull[this.psHull.length-1], this.ps.points[this.currentCPosition]));
     }
 
@@ -339,11 +337,16 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
     fullButton.addEventListener("click", (e) =>{
         this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+        this.convexHull.start();
         this.nextStepInterval = setInterval(() => {
         this.nextStep();
         }, 1000);
-        while (sidesCompleted<2) clearInterval(this.nextStepInterval);
     });
+
+      this.stopAnimation = function () {
+        clearInterval(this.nextStepInterval);
+        this.nextStepInterval = null;
+        }
 
     stopButton.addEventListener("click", (e) =>{
         if (this.nextStepInterval!=null) clearInterval(this.nextStepInterval);
@@ -361,28 +364,47 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         case "remove":
             this.removeBadEdge();
             break;
-        case "continue":
-            this.convexHull.pushC();
-            this.stepPhase = "nextC";
-            break;
         case "done":
+            try{
+                this.stopAnimation();
+            }
+            catch{
+            }
+            this.updateVisual(null,null,null);
             break;
         }
     }
 
 
     this.checkSides = function(){
-        if(this.convexHull.currentCPosition == ps.size()){
+        console.log(this.convexHull.currentCPosition + " == " + this.ps.size()-1)
+        if(this.convexHull.currentCPosition == this.ps.size()-1){
+            console.log("SWITCH");
             this.convexHull.secondSide();
             this.sidesCompleted += 1;
+            console.log("completed? " + this.sidesCompleted)
+        }
+        if (this.sidesCompleted == 2){
+            this.stepPhase = "done";
+        }
+        else{
+            this.stepPhase = "nextC";
         }
     }
 
     this.removeBadEdge = function(){
         this.nextABC[0].getVisualPoint().getCurrentEdge().remove();
         this.nextABC[1].getVisualPoint().getCurrentEdge().remove();
+        this.nextABC[1].getVisualPoint().unhighlight();
         this.nextABC[2].getVisualPoint().getCurrentEdge().remove();
+
+        this.nextABC[0].getVisualPoint().addEdge(this.nextABC[2].getVisualPoint(), this.edgeGroup);
+
         this.convexHull.backtrackC();
+
+        this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
+        this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+
         this.stepPhase = "compatible";
     }
 
@@ -390,7 +412,6 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         // TODO: replace this part when Laura's done
         let moveOnToNextC = this.convexHull.nextC()
         this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
-        console.log(this.nextABC);
         this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
         
         // check to see if moving on to comptible
@@ -414,7 +435,8 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
                 // turn line green and solid
                 this.nextABC[0].getVisualPoint().getCurrentEdge().compatible();
                 this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
-                this.stepPhase = "continue";
+                this.convexHull.pushC();
+                this.checkSides();
             }
     }
 
@@ -424,12 +446,13 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         }
 
         try{
-            console.log(a);
             a.highlight();
             b.highlight();
             c.highlight();
             a.addEdge(b, this.edgeGroup);
             b.addEdge(c, this.edgeGroup);
+            a.getCurrentEdge().dottedEdge();
+            b.getCurrentEdge().dottedEdge();
         }
         catch{
             // console.log(e);
@@ -503,13 +526,13 @@ function VisualPoint (point, pointGroup) {
         edge.init();
         this.currentEdge = edge;
         point.currentEdge = edge; 
-        console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
+        // console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
         // console.log(point.x == this.x && point.y == this.y);
     }
 
     this.addConnected = function(point){
         if (this.connectedPoints.includes(point) || (point.x == this.x && point.y == this.y)) return;
-        console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
+        // console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
         this.connectedPoints.push(point);
     }
 
@@ -539,6 +562,11 @@ function VisualEdge (point1, point2, edgeGroup){
         this.line.setAttributeNS(null, "stroke-dasharray", "10,10"); 
         this.line.setAttributeNS(null, "z-index", "1"); 
         edgeGroup.appendChild(this.line);
+    }
+
+    this.dottedEdge = function(){
+        this.line.setAttributeNS(null, "stroke", "black");
+        this.line.setAttributeNS(null, "stroke-dasharray", "10,10");
     }
 
     this.compatible = function(){
