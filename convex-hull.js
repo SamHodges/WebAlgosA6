@@ -131,12 +131,8 @@ function PointSet () {
 function ConvexHull (ps, viewer) {
     this.ps = ps;          // a PointSet storing the input to the algorithm
     this.viewer = viewer;  // a ConvexHullViewer for this visualization
-    this.done = false; // variable for whether it's finished or not-- Laura, make sure to update this when finished!!
     this.psHull = [];
-
-    this.isDone = function(){
-        return this.done;
-    }
+    this.currentCPosition = 1;
 
     // start a visualization of the Graham scan algorithm performed on ps
     this.start = function () {
@@ -148,23 +144,51 @@ function ConvexHull (ps, viewer) {
     }
 
     // perform a single step of the Graham scan algorithm performed on ps
-    this.step = function (currentC) { 
-        // console.log("current hull length: " + this.psHull.length);
-    
+    this.step = function () { 
         // COMPLETE THIS METHOD
-        if(this.psHull.length == 1){
-            // console.log("pushing a new C!" + this.ps.points[currentC]);
-            this.psHull.push(this.ps.points[currentC]);
-        } else {
-            // console.log(this.psHull[1]);
-                while(this.psHull.length>1 && !(this.isRight(this.psHull[this.psHull.length-2], this.psHull[this.psHull.length-1], this.ps.points[currentC]))){
-                    this.psHull.pop();
+        if(!this.nextC()) {
+                while(this.notCompatible()){
+                    this.backtrackC();
                 }
-            // console.log("BEFORE current hull length: " + this.psHull.length);
-            this.psHull.push(this.ps.points[currentC]);
-            // console.log("AFTER current hull length: " + this.psHull.length)
+            this.pushC();
         }
-    
+    }
+
+    this.nextC = function(){
+        this.currentCPosition += 1;
+        if(this.psHull.length == 1){
+            this.pushC(this.currentCPosition);
+            return true;
+        }
+        return false;
+    }
+
+    this.returnABC = function(){
+        return [this.psHull[this.psHull.length-2], this.psHull[this.psHull.length-1], this.ps.points[this.currentCPosition]];
+    }
+
+    this.notCompatible = function(){
+        console.log("equiv: ");
+        console.log(this.psHull[this.psHull.length-1]);
+        return this.psHull.length>1 && !(this.isRight(this.psHull[this.psHull.length-2], this.psHull[this.psHull.length-1], this.ps.points[this.currentCPosition]));
+    }
+
+    this.backtrackC = function(){
+        this.psHull.pop();
+    }
+
+    this.pushC = function(){
+        this.psHull.push(this.ps.points[this.currentCPosition]);
+    }
+
+    this.secondSide = function(){
+        this.psHull = [];
+
+        this.ps.reverse();
+        this.psHull[0] = this.ps.points[0];
+        this.psHull[1] = this.ps.points[1];
+
+        this.currentCPosition = 1;
     }
 
     this.isRight = function(a, b, c){
@@ -198,45 +222,27 @@ function ConvexHull (ps, viewer) {
 
     // COMPLETE THIS METHOD
         this.start();
-        // this.ps.sort();
-        // console.log(this.ps.getYCoords());
+
         for (let i = 2; i<ps.size(); i++){
-            this.step(i);
+            this.step();
         }
 
-        // console.log("END LENGTH: " + this.psHull.length);
         let returnSet = new PointSet();
         for(let j = 0; j<this.psHull.length; j++){
             if (this.psHull[j] != undefined) returnSet.addPoint(this.psHull[j]);  
         }
 
-        // console.log(returnSet.toString());
-        // console.log(">>>>>>>>>>>");
-
-        this.psHull = [];
-
-        this.ps.reverse();
-        this.psHull[0] = this.ps.points[0];
-        this.psHull[1] = this.ps.points[1];
-
-        // console.log(this.psHull);
+        this.secondSide();
 
         for (let k = 2; k<ps.size(); k++){
-            this.step(k);
+            this.step();
         }
 
-        // console.log("END LENGTH 2: " + this.psHull.length);
-
-        // console.log(this.psHull)
 
         for(let l = 1; l<this.psHull.length; l++){
             if (this.psHull[l] != undefined) returnSet.addPoint(this.psHull[l]);  
         }
         
-        // console.log(returnSet.toString());
-        // console.log("--------------------------------------------------------------")
-
-        // console.log(returnSet);
         return returnSet;
     }
 }
@@ -262,7 +268,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.convexHull = convexHull; 
     this.stepPhase = "nextC";
     this.nextABC = null; 
-    this.done = false;
+    this.sidesCompleted = 0;
     this.nextStepInterval = null;
     this.highlightedPoints = [];
 
@@ -296,6 +302,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         const rect = this.svg.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+        console.log(x,y);
 
         if (e.explicitOriginalTarget.localName == "circle"){
             let curCircle = e.target;
@@ -323,6 +330,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
     startButton.addEventListener("click", (e) => {
         this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+        this.convexHull.start();
     });
 
     stepButton.addEventListener("click", (e) => {
@@ -334,7 +342,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         this.nextStepInterval = setInterval(() => {
         this.nextStep();
         }, 1000);
-        while (this.done) clearInterval(this.nextStepInterval);
+        while (sidesCompleted<2) clearInterval(this.nextStepInterval);
     });
 
     stopButton.addEventListener("click", (e) =>{
@@ -353,42 +361,61 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         case "remove":
             this.removeBadEdge();
             break;
+        case "continue":
+            this.convexHull.pushC();
+            this.stepPhase = "nextC";
+            break;
         case "done":
             break;
+        }
+    }
+
+
+    this.checkSides = function(){
+        if(this.convexHull.currentCPosition == ps.size()){
+            this.convexHull.secondSide();
+            this.sidesCompleted += 1;
         }
     }
 
     this.removeBadEdge = function(){
         this.nextABC[0].getVisualPoint().getCurrentEdge().remove();
         this.nextABC[1].getVisualPoint().getCurrentEdge().remove();
-        this.stepPhase = "nextC";
+        this.nextABC[2].getVisualPoint().getCurrentEdge().remove();
+        this.convexHull.backtrackC();
+        this.stepPhase = "compatible";
     }
 
     this.nextC = function(){
-        // TODO: replace this part whwn Laura's done
-        this.nextABC =  [this.ps.points[0], this.ps.points[1], this.ps.points[2]] //this.convexHull.nextC() // this will return [A, B, C]
+        // TODO: replace this part when Laura's done
+        let moveOnToNextC = this.convexHull.nextC()
+        this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
+        console.log(this.nextABC);
         this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
-        this.stepPhase = "compatible"; //move on to compatible if stack is full enough
+        
+        // check to see if moving on to comptible
+        if(!moveOnToNextC) {
+            this.stepPhase = "compatible"; //move on to compatible if stack is full enough
+        }
     }
 
     this.checkCompatible = function(){
         // TODO: replace with Laura's
-            let compatible = false; // this.convexHull.compatible(nextOutput[0], nextOutput[1], nextOutput[2]); // checks if they're compatible and returns bool 
+            let notCompatible = this.convexHull.notCompatible(); // checks if they're compatible and returns bool 
 
-            if (compatible){
-                // turn line green and solid
-                this.nextABC[0].getVisualPoint().getCurrentEdge().compatible();
-                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
-                this.stepPhase = "nextC";
-            }
-            else{
+            if (notCompatible){
                 // red dotted line with a cross, add to "delete" cycle
                 this.nextABC[0].getVisualPoint().getCurrentEdge().incompatible();
                 this.nextABC[1].getVisualPoint().getCurrentEdge().incompatible();
+                this.nextABC[2].getVisualPoint().getCurrentEdge().incompatible();
                 this.stepPhase = "remove";
             }
-        this.done = false; // !this.convexHull.pushC(); // TODO: returns whether C pushed successfully @Laura
-        if (this.done) this.stepPhase = "done";
+            else{
+                // turn line green and solid
+                this.nextABC[0].getVisualPoint().getCurrentEdge().compatible();
+                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
+                this.stepPhase = "continue";
+            }
     }
 
     this.updateVisual = function(a,b,c){
@@ -397,6 +424,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         }
 
         try{
+            console.log(a);
             a.highlight();
             b.highlight();
             c.highlight();
@@ -467,20 +495,26 @@ function VisualPoint (point, pointGroup) {
     } 
 
     this.addEdge = function(point, edgeGroup){
-        if (this.connectedPoints.includes(point)) return;
+        if (this.connectedPoints.includes(point) || (point.x == this.x && point.y == this.y)) return;
         this.connectedPoints.push(point);
-        point.addConnected(this);
+        // console.log("calling in (" + this.x + ", " + this.y + ")")
+        point.addConnected(this.point);
         let edge = new VisualEdge(this, point, edgeGroup);
         edge.init();
         this.currentEdge = edge;
         point.currentEdge = edge; 
+        console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
+        // console.log(point.x == this.x && point.y == this.y);
     }
 
     this.addConnected = function(point){
+        if (this.connectedPoints.includes(point) || (point.x == this.x && point.y == this.y)) return;
+        console.log("(" + this.x + ", " + this.y + ") connecting to " + "(" + point.x + ", " + point.y + ")")
         this.connectedPoints.push(point);
     }
 
     this.getCurrentEdge = function(){
+        // console.log("FOR (" + this.x + ", " + this.y + "): " + "(" + this.connectedPoints[length-1].x + ", " + this.connectedPoints[length-1].y+ ")");
         return this.currentEdge;
     }
 
@@ -537,12 +571,12 @@ function doVisuals(){
 
 
     // start everything
-    const convexHull = new ConvexHull(0);
     const ps = new PointSet();
     ps.addNewPoint(100, 100);
     ps.addNewPoint(100, 300);
     ps.addNewPoint(300, 300);
     ps.addNewPoint(300, 100);
+    const convexHull = new ConvexHull(ps);
     const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, convexHull);
     cv.initialize();
 }
