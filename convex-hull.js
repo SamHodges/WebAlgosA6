@@ -1,6 +1,16 @@
-// next steps: update visual based on return of compatible
+/*
+TODO:
+IMPORTANT STUFF
+- updating the description
+- HTML + CSS checks
+- make it look a bit prettier
 
-//:3
+EC STUFF
+- deleting functionality
+- continue button to unpause full animation
+- EC: when point added after, check to see if it's within hull or not
+- EC: slider to change speed of animation
+*/
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_WIDTH = 600;
