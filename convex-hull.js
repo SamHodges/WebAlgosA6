@@ -641,10 +641,6 @@ function doVisuals(){
 
     // start everything
     const ps = new PointSet();
-    ps.addNewPoint(100, 100);
-    ps.addNewPoint(100, 300);
-    ps.addNewPoint(300, 300);
-    ps.addNewPoint(300, 100);
     const convexHull = new ConvexHull(ps);
     const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, text, convexHull);
     cv.initialize();
