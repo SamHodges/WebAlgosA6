@@ -14,15 +14,6 @@ function Point (x, y, id) {
     this.x = x;
     this.y = y;
     this.id = id;
-    this.visualPoint = null;
-
-    this.setVisualPoint = function(visualPoint){
-        this.visualPoint = visualPoint;
-    }
-
-    this.getVisualPoint = function(){
-        return this.visualPoint;
-    }
 
     // Compare this Point to another Point p for the purposes of
     // sorting a collection of points. The comparison is according to
@@ -272,6 +263,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.highlightedPoints = [];
     this.startedAlgo = false;
     this.text = text;
+    this.visualsToPoints = {}; // dict of points to visual points
 
     document.addEventListener("keydown", (e) => {
         if(e.key == "Backspace"){
@@ -343,7 +335,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
     startButton.addEventListener("click", (e) => {
-        this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+        this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
         this.convexHull.start();
         this.startedAlgo = true;
     });
@@ -353,7 +345,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     });
 
     fullButton.addEventListener("click", (e) =>{
-        this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
+        this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
         this.convexHull.start();
         this.nextStepInterval = setInterval(() => {
         this.nextStep();
@@ -393,6 +385,14 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
 
+    this.setVisualPoint = function(visualPoint, point){
+        this.visualsToPoints[point] = visualPoint;
+    }
+
+    this.getVisualPoint = function(point){
+        return this.visualsToPoints[point];
+    }
+
     this.checkSides = function(){
         console.log(this.convexHull.currentCPosition + " == " + this.ps.size()-1)
         if(this.convexHull.currentCPosition == this.ps.size()-1){
@@ -410,19 +410,18 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
     this.removeBadEdge = function(){
-        this.nextABC[0].getVisualPoint().getCurrentEdge().remove();
-        this.nextABC[1].getVisualPoint().getCurrentEdge().remove();
-        this.nextABC[1].getVisualPoint().unhighlight();
-        this.nextABC[2].getVisualPoint().getCurrentEdge().remove();
+        this.getVisualPoint(this.nextABC[0]).getCurrentEdge().remove();
+        this.getVisualPoint(this.nextABC[1]).getCurrentEdge().remove();
+        this.getVisualPoint(this.nextABC[1]).unhighlight();
+        this.getVisualPoint(this.nextABC[2]).getCurrentEdge().remove();
 
-        this.nextABC[0].getVisualPoint().addEdge(this.nextABC[2].getVisualPoint(), this.edgeGroup);
+        this.getVisualPoint(this.nextABC[0]).addEdge(this.getVisualPoint(this.nextABC[2]), this.edgeGroup);
 
         this.convexHull.backtrackC();
-        console.log("HULL: " + this.convexHull.psHull);
 
         try{
             this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
-            this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+            this.updateVisual(this.getVisualPoint(this.nextABC[0]), this.getVisualPoint(this.nextABC[1]), this.getVisualPoint(this.nextABC[2]));
         }
         catch{
             console.log("removed down to 1");
@@ -436,7 +435,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         let moveOnToNextC = this.convexHull.nextC()
         try{
             this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
-            this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+            this.updateVisual(this.getVisualPoint(this.nextABC[0]), this.getVisualPoint(this.nextABC[1]), this.getVisualPoint(this.nextABC[2]));
         }
         catch{
             console.log("unsure");
@@ -458,21 +457,20 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
             if (notCompatible){
                 // red dotted line with a cross, add to "delete" cycle
-                this.nextABC[0].getVisualPoint().getCurrentEdge().incompatible();
-                this.nextABC[1].getVisualPoint().getCurrentEdge().incompatible();
-                this.nextABC[2].getVisualPoint().getCurrentEdge().incompatible();
+                this.getVisualPoint(this.nextABC[0]).getCurrentEdge().incompatible();
+                this.getVisualPoint(this.nextABC[1]).getCurrentEdge().incompatible();
+                this.getVisualPoint(this.nextABC[2]).getCurrentEdge().incompatible();
                 this.stepPhase = "remove";
             }
             else if (this.convexHull.psHull.length <= 1){
-                console.log("over here!");
-                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
+                this.getVisualPoint(this.nextABC[1]).getCurrentEdge().compatible();
                 this.convexHull.pushC();
                 this.checkSides();
             }
             else{
                 // turn line green and solid
-                this.nextABC[0].getVisualPoint().getCurrentEdge().compatible();
-                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
+                this.getVisualPoint(this.nextABC[0]).getCurrentEdge().compatible();
+                this.getVisualPoint(this.nextABC[1]).getCurrentEdge().compatible();
                 this.convexHull.pushC();
                 this.checkSides();
             }
@@ -512,7 +510,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
     // create a visual point
     this.createVisualPoint = function (point) {
-        let currPoint = new VisualPoint(point, this.pointGroup);
+        let currPoint = new VisualPoint(point, this.pointGroup, this);
         currPoint.init();
         this.points.push(currPoint);
     }
@@ -523,7 +521,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
 
 // class for a visualized point
-function VisualPoint (point, pointGroup) {
+function VisualPoint (point, pointGroup, convexHull) {
     this.point = point;
     this.x = this.point.x;
     this.y = this.point.y;
@@ -532,6 +530,7 @@ function VisualPoint (point, pointGroup) {
     this.connectedPoints = [];
     this.currentEdge = null;
     this.deletable = false;
+    this.convexHull = convexHull;
 
     this.init = function(){
         this.circle.setAttributeNS(null, "cx", this.x);
@@ -542,7 +541,7 @@ function VisualPoint (point, pointGroup) {
         this.circle.setAttributeNS(null, "fill", "white");
         this.circle.setAttributeNS(null, "z-index", "3"); 
         pointGroup.appendChild(this.circle);
-        this.point.setVisualPoint(this);
+        this.convexHull.setVisualPoint(this, this.point);
     }
 
     this.unhighlight = function(){
