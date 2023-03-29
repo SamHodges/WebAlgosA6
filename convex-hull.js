@@ -260,7 +260,7 @@ function ConvexHull (ps, viewer) {
 // TODO: change deleted code to account for the following: selecting and then starting animation, deleting when connected to other nodes
 // TODO: something wrong with the line display
 
-function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopButton, convexHull) {
+function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopButton, text, convexHull) {
     this.svg = svg;  // svg object where the visualization is drawn
     this.ps = ps;    // list of points in form of PointSet
     this.points = []; //set of visual points
@@ -270,6 +270,8 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.sidesCompleted = 0;
     this.nextStepInterval = null;
     this.highlightedPoints = [];
+    this.startedAlgo = false;
+    this.text = text;
 
     document.addEventListener("keydown", (e) => {
         if(e.key == "Backspace"){
@@ -319,19 +321,31 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
         }
         else{
-            // add new point to point set
-            this.ps.addNewPoint(x, y);
+            if (!this.startedAlgo){
+                // add new point to point set
+                this.ps.addNewPoint(x, y);
 
-            // create corresponding visual
-            this.createVisualPoint(ps.points[ps.points.length-1]);
+                // create corresponding visual
+                this.createVisualPoint(ps.points[ps.points.length-1]);
 
-            this.ps.sort();
+                this.ps.sort();
+            }
+            else{
+                let newPoint = new Point(x, y, this.curPointID);
+                this.createVisualPoint(newPoint);
+                this.updateTextBox("The algorithm has already started, so the point at (" + x + ", " + y + ") will not be included.");
+            }
         }
     });
+
+    this.updateTextBox = function (str) {
+        this.text.innerHTML = str;
+    }
 
     startButton.addEventListener("click", (e) => {
         this.updateVisual(this.ps.points[0].getVisualPoint(), this.ps.points[1].getVisualPoint(), null);
         this.convexHull.start();
+        this.startedAlgo = true;
     });
 
     stepButton.addEventListener("click", (e) => {
@@ -622,6 +636,8 @@ function doVisuals(){
     const stepButton = document.querySelector("#stepButton");
     const fullButton = document.querySelector("#fullButton");
     const stopButton = document.querySelector("#stopButton");
+    const text = document.querySelector("#convex-text-box");
+
 
 
     // start everything
@@ -631,7 +647,7 @@ function doVisuals(){
     ps.addNewPoint(300, 300);
     ps.addNewPoint(300, 100);
     const convexHull = new ConvexHull(ps);
-    const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, convexHull);
+    const cv = new ConvexHullViewer(svg, ps, startButton, stepButton, fullButton, stopButton, text, convexHull);
     cv.initialize();
 }
 
