@@ -108,6 +108,7 @@ function PointSet () {
 
     // get the number of points 
     this.size = function () {
+        // console.log("size: " + this.points);
     return this.points.length;
     }
 
@@ -323,6 +324,8 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
 
             // create corresponding visual
             this.createVisualPoint(ps.points[ps.points.length-1]);
+
+            this.ps.sort();
         }
     });
 
@@ -401,18 +404,29 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         this.nextABC[0].getVisualPoint().addEdge(this.nextABC[2].getVisualPoint(), this.edgeGroup);
 
         this.convexHull.backtrackC();
+        console.log("HULL: " + this.convexHull.psHull);
 
-        this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
-        this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
-
+        try{
+            this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
+            this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+        }
+        catch{
+            console.log("removed down to 1");
+        }
         this.stepPhase = "compatible";
+        
     }
 
     this.nextC = function(){
         // TODO: replace this part when Laura's done
         let moveOnToNextC = this.convexHull.nextC()
-        this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
-        this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+        try{
+            this.nextABC =  this.convexHull.returnABC(); // this will return [A, B, C]
+            this.updateVisual(this.nextABC[0].getVisualPoint(), this.nextABC[1].getVisualPoint(), this.nextABC[2].getVisualPoint());
+        }
+        catch{
+            console.log("unsure");
+        }
         
         // check to see if moving on to comptible
         if(!moveOnToNextC) {
@@ -423,6 +437,10 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.checkCompatible = function(){
         // TODO: replace with Laura's
             let notCompatible = this.convexHull.notCompatible(); // checks if they're compatible and returns bool 
+            console.log("compatible? " + !notCompatible);
+            console.log(this.convexHull.psHull);
+            console.log(this.convexHull.ps.points);
+            console.log(this.convexHull.returnABC());
 
             if (notCompatible){
                 // red dotted line with a cross, add to "delete" cycle
@@ -430,6 +448,12 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
                 this.nextABC[1].getVisualPoint().getCurrentEdge().incompatible();
                 this.nextABC[2].getVisualPoint().getCurrentEdge().incompatible();
                 this.stepPhase = "remove";
+            }
+            else if (this.convexHull.psHull.length <= 1){
+                console.log("over here!");
+                this.nextABC[1].getVisualPoint().getCurrentEdge().compatible();
+                this.convexHull.pushC();
+                this.checkSides();
             }
             else{
                 // turn line green and solid
@@ -441,7 +465,9 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
     this.updateVisual = function(a,b,c){
+        // console.log("size in vis: " + this.ps + ", " + this.convexHull.ps);
         for (let i = 0; i<this.ps.size(); i++){
+            // console.log(this.ps.size());
             this.points[i].unhighlight();
         }
 
