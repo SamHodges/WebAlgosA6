@@ -4,7 +4,6 @@ body{
 }
 svg {
     position: relative;
-    display:flexbox;
     margin-bottom: 10px
 }
 

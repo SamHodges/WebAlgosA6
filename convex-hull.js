@@ -1,3 +1,12 @@
+/*
+TODO:
+Laura
+- HTML + CSS checks
+- EC: slider to change speed of animation
+Sam
+- not even EC: continue button to unpause full animation
+*/
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_WIDTH = 600;
 const SVG_HEIGHT = 400;
@@ -323,7 +332,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
                 this.highlightedPoints.splice(this.highlightedPoints.indexOf(curCircle), 1);
             }
             else{
-                curCircle.setAttributeNS(null, "stroke", "red");
+                curCircle.setAttributeNS(null, "stroke", "#BB29BB");
                 curCircle.setAttributeNS(null, "stroke-width", "5");
                 this.highlightedPoints.push(curCircle);
             }
@@ -367,10 +376,13 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
     startButton.addEventListener("click", (e) => {
-        if (this.startedAlgo){
+        if (this.ps.size() < 3) {
+            this.updateTextBox("Please enter more points before starting algorithm.");
+        }
+        else if (this.startedAlgo == false){
+            this.startedAlgo = true;
             this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
             this.convexHull.start();
-            this.startedAlgo = true;
         }
     });
 
@@ -379,7 +391,10 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     });
 
     fullButton.addEventListener("click", (e) =>{
-        if (this.startedAlgo == false){
+        if (this.ps.size() < 3) {
+            this.updateTextBox("Please enter more points before starting algorithm.");
+        }
+        else if (this.startedAlgo == false){
             this.startedAlgo = true;
             this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
             this.convexHull.start();
@@ -422,7 +437,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         this.polygon = document.createElementNS(SVG_NS, "polygon");
         
         this.polygon.setAttribute("points", this.polygonPoints);
-        this.polygon.setAttribute("fill", "blue");
+        this.polygon.setAttribute("fill", "#534582");
         this.hiddenShape.appendChild(this.polygon);
         console.log("hidden complete");
 
