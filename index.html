@@ -16,10 +16,26 @@
   <body>
     <div id=root>
       <h1>Animated Convex Hull Demo</h1>
-      <p>Click on the box below to add points.</p>
-      <svg id="convex-hull-box" xmlns="http://www.w3.org/2000/svg" width="600" height="400">
-	<rect width="100%" height="100%" fill="gray"/>
-      </svg>
+      <p>Click on the box below to add points. 
+        After you have a couple of points on the screen, you can start playing with the buttons below. 
+        <br />
+        <br />
+        Clicking on <b>Start</b> primes the site to iterate through the points by sorting them by x-coordinate, using height as a tie breaker should any two x-coordinates be equal. 
+        <br />
+        Clicking on <b>Step</b> checks the highlighted point as the first of a three-point turn- each of the steps in the following sequence would count as ONE step:
+        <br />
+        1. if said turn moves right, the point will be connected by a line to the following point. 
+        <br />
+        2. Wherever there is no right turn, the algorithm backtracks (1 <b>Step</b> at a time) until there is another path to take. 
+        <br />
+        The button <b>Full Animation</b> iterates through all the steps in one go. 
+        <br />
+        Click <b>Stop Animation</b> to stop the next step in the hull animation.</p>
+        <div id="border">
+          <svg id="convex-hull-box" xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+            <rect width="100%" height="100%" fill="#ece3f0"/>
+          </svg>
+        </div>
       <button id="startButton">Start</button> 
       <button id="stepButton">Step</button> 
       <button id="fullButton">Full Animation</button>
