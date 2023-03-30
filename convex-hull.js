@@ -1,13 +1,3 @@
-/*
-TODO:
-Laura
-- HTML + CSS checks
-- EC: slider to change speed of animation
-
-Sam
-- not even EC: continue button to unpause full animation
-*/
-
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_WIDTH = 600;
 const SVG_HEIGHT = 400;
@@ -328,7 +318,7 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         if (e.explicitOriginalTarget.localName == "circle"){
             let curCircle = e.target;
             if (this.highlightedPoints.includes(curCircle)){
-                curCircle.setAttributeNS(null, "stroke", "black");
+                curCircle.setAttributeNS(null, "stroke", "#5E376D");
                 curCircle.setAttributeNS(null, "stroke-width", "2");
                 this.highlightedPoints.splice(this.highlightedPoints.indexOf(curCircle), 1);
             }
@@ -595,7 +585,7 @@ function VisualPoint (point, pointGroup, convexHull) {
         this.circle.setAttributeNS(null, "cx", this.x);
         this.circle.setAttributeNS(null, "cy", this.y);
         this.circle.setAttributeNS(null, "r", 10);
-        this.circle.setAttributeNS(null, "stroke", "black")
+        this.circle.setAttributeNS(null, "stroke", "#5E376D")
         this.circle.setAttributeNS(null, "stroke-width", "2");
         this.circle.setAttributeNS(null, "fill", "white");
         this.circle.setAttributeNS(null, "z-index", "3"); 
@@ -605,7 +595,7 @@ function VisualPoint (point, pointGroup, convexHull) {
 
     this.unhighlight = function(){
         this.highlighted = false;
-        this.circle.setAttributeNS(null, "stroke", "black")
+        this.circle.setAttributeNS(null, "stroke", "#5E376D")
         this.circle.setAttributeNS(null, "stroke-width", "2");
     }
 
@@ -669,7 +659,7 @@ function VisualEdge (point1, point2, edgeGroup){
 
     this.compatible = function(){
         this.highlighted = true;
-        this.line.setAttributeNS(null, "stroke", "green");
+        this.line.setAttributeNS(null, "stroke", "#76b947");
         this.line.setAttributeNS(null, "stroke-dasharray", "10,0"); 
     }
 
