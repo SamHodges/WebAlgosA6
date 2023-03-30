@@ -1,15 +1,11 @@
 /*
 TODO:
-IMPORTANT STUFF
-- updating the description
+Laura
 - HTML + CSS checks
-- make it look a bit prettier
-
-EC STUFF
-- deleting functionality
-- continue button to unpause full animation
-- EC: when point added after, check to see if it's within hull or not
 - EC: slider to change speed of animation
+
+Sam
+- not even EC: continue button to unpause full animation
 */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -258,9 +254,6 @@ function ConvexHull (ps, viewer) {
 
 //------------------------------------------------------------------------------------------------------------------------//
 
-// TODO: change deleted code to account for the following: selecting and then starting animation, deleting when connected to other nodes
-// TODO: something wrong with the line display
-
 function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopButton, text, convexHull) {
     this.svg = svg;  // svg object where the visualization is drawn
     this.ps = ps;    // list of points in form of PointSet
@@ -274,16 +267,40 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.startedAlgo = false;
     this.text = text;
     this.visualsToPoints = {}; // dict of points to visual points
+    this.polygonPoints = "";
 
     document.addEventListener("keydown", (e) => {
-        if(e.key == "Backspace"){
+        if(e.key == "Backspace" && this.startedAlgo == false){
             for (let i=0; i<this.highlightedPoints.length; i++){
                 this.highlightedPoints[i].setAttributeNS(null, "r", 0);
-                // TODO: delete from points list lmaoooo
+                let x = this.highlightedPoints[i].getAttributeNS(null, "cx");
+                let y = this.highlightedPoints[i].getAttributeNS(null, "cy");
+                let newSet = new PointSet(); 
+
+                for (let k = 0; k<this.ps.size(); k++){
+                    if (x != this.ps.points[k].x || y != this.ps.points[k].y){
+                        newSet.addNewPoint(this.ps.points[k].x, this.ps.points[k].y);
+                    }
+                    else{
+                    }
+                }
+
+                console.log(this.ps.points);
+                this.ps = newSet;
+                this.convexHull.ps = newSet;
+                console.log(this.ps.points);
+                // TODO: delete from points list lmaoooo-- highlightedPoints is just a list of circles
+                // find corresponding x and y, check against all points, delete from point lists?
             }
+        }
+        else if (e.key == "Backspace"){
+            this.updateTextBox("The algorithm has already started, so you cannot delete a node");
         }
     });
 
+    this.hiddenShape = document.createElementNS(SVG_NS, "g");
+    this.hiddenShape.id = "graph-hidden";
+    this.svg.appendChild(this.hiddenShape);
 
     // create svg group for displaying edges
     this.edgeGroup = document.createElementNS(SVG_NS, "g");
@@ -305,7 +322,8 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
         const rect = this.svg.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        console.log(x,y);
+        // console.log(x,y);
+
 
         if (e.explicitOriginalTarget.localName == "circle"){
             let curCircle = e.target;
@@ -335,7 +353,21 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
             else{
                 let newPoint = new Point(x, y, this.curPointID);
                 this.createVisualPoint(newPoint);
-                this.updateTextBox("The algorithm has already started, so the point at (" + x + ", " + y + ") will not be included.");
+            
+                if (e.explicitOriginalTarget.localName == "polygon" && this.stepPhase=="done"){
+                    this.updateTextBox("The algorithm has already started, so the point at (" + x + ", " + y + ") will not be included.\
+                        \n But we do see it's INSIDE the convex hull line.");
+
+                }
+                else if (this.stepPhase == "done"){
+                    this.updateTextBox("The algorithm has already started, so the point at (" + x + ", " + y + ") will not be included.\
+                        \n But we do see it's OUTSIDE the convex hull line.");
+                }
+                else{
+                    this.updateTextBox("The algorithm has already started, so the point at (" + x + ", " + y + ") will not be included.\
+                        \n Click again when the algorithm finishes to see if it's in the hull line");
+                }
+
             }
         }
     });
@@ -345,9 +377,11 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     }
 
     startButton.addEventListener("click", (e) => {
-        this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
-        this.convexHull.start();
-        this.startedAlgo = true;
+        if (this.startedAlgo){
+            this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
+            this.convexHull.start();
+            this.startedAlgo = true;
+        }
     });
 
     stepButton.addEventListener("click", (e) => {
@@ -355,20 +389,23 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     });
 
     fullButton.addEventListener("click", (e) =>{
-        this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
-        this.convexHull.start();
-        this.nextStepInterval = setInterval(() => {
-        this.nextStep();
-        }, 1000);
+        if (this.startedAlgo == false){
+            this.startedAlgo = true;
+            this.updateVisual(this.getVisualPoint(this.ps.points[0]), this.getVisualPoint(this.ps.points[1]), null);
+            this.convexHull.start();
+            this.nextStepInterval = setInterval(() => {
+            this.nextStep();
+            }, 1000);
+        }
     });
 
       this.stopAnimation = function () {
-        clearInterval(this.nextStepInterval);
+        if (this.nextStepInterval!=null) clearInterval(this.nextStepInterval);
         this.nextStepInterval = null;
         }
 
     stopButton.addEventListener("click", (e) =>{
-        if (this.nextStepInterval!=null) clearInterval(this.nextStepInterval);
+        this.stopAnimation();
     });
 
     this.nextStep = function(){
@@ -384,14 +421,22 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
             this.removeBadEdge();
             break;
         case "done":
-            try{
-                this.stopAnimation();
-            }
-            catch{
-            }
+            this.stopAnimation();
             this.updateVisual(null,null,null);
+            this.makeHiddenPolygon();
             break;
         }
+    }
+
+    this.makeHiddenPolygon = function(){
+        this.polygon = document.createElementNS(SVG_NS, "polygon");
+        
+        this.polygon.setAttribute("points", this.polygonPoints);
+        this.polygon.setAttribute("fill", "blue");
+        this.hiddenShape.appendChild(this.polygon);
+        console.log("hidden complete");
+
+
     }
 
 
@@ -406,6 +451,10 @@ function ConvexHullViewer (svg, ps, startButton, stepButton, fullButton, stopBut
     this.checkSides = function(){
         console.log(this.convexHull.currentCPosition + " == " + this.ps.size()-1)
         if(this.convexHull.currentCPosition == this.ps.size()-1){
+            for(let j = 0; j<this.convexHull.psHull.length; j++){
+                this.polygonPoints += this.convexHull.psHull[j].x + ", " + this.convexHull.psHull[j].y + " "
+            }
+
             console.log("SWITCH");
             this.convexHull.secondSide();
             this.sidesCompleted += 1;
